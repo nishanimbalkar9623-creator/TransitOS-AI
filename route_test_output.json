@@ -1,0 +1,15 @@
+{
+  "route": "Mumbai -> Pune",
+  "risk_level": "HIGH",
+  "risk_score": 11.7,
+  "risk_score_numeric": 11.7,
+  "estimated_delay_hours": 3.85,
+  "weather_condition": "cloud",
+  "weather_source": "api",
+  "time_of_day": "night",
+  "day_of_week": "friday",
+  "alternate_route": {
+    "alternate": "Mumbai → Kolhapur → Pune",
+    "extra_time_hours": 0.5
+  }
+}

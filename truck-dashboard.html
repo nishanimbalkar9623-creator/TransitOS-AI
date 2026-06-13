@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truck Owner Portal — TransitOS AI</title>
+  <link rel="stylesheet" href="index.css">
+  <style>
+    /* Custom Color overrides for Trucker Theme */
+    :root {
+      --green-color: #00C851;
+      --green-glow: rgba(0, 200, 81, 0.15);
+      --red-color: #ff4444;
+      --red-glow: rgba(255, 68, 68, 0.15);
+      --amber-color: #FFBB33;
+      --amber-glow: rgba(255, 187, 51, 0.15);
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 32px;
+      padding-top: 110px;
+      min-height: calc(100vh - 80px);
+    }
+
+    /* Navbar Label */
+    .portal-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-color);
+      border: 1px solid rgba(255, 69, 0, 0.3);
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: rgba(255, 69, 0, 0.05);
+      font-family: var(--font-header);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      color: white;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-header);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      height: fit-content;
+      position: sticky;
+      top: 110px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      color: var(--text-white);
+      background: rgba(255, 69, 0, 0.06);
+    }
+
+    .sidebar-link.active {
+      border-left: 3px solid var(--accent-color);
+      background: rgba(255, 69, 0, 0.1);
+      color: var(--text-white);
+    }
+
+    .sidebar-link svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    /* Main Dashboard Metrics panel */
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Stats Bar Grid */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .stat-card-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 24px;
+      position: relative;
+    }
+
+    .stat-card-box::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--border-color);
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
+    }
+
+    .stat-card-box.accent-glow::after {
+      background: var(--accent-color);
+    }
+
+    .stat-card-box.green-glow::after {
+      background: var(--green-color);
+    }
+
+    .stat-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .stat-card-value {
+      font-family: var(--font-header);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-white);
+    }
+
+    .stat-card-sub {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .stat-card-sub.green-text {
+      color: var(--green-color);
+    }
+
+    /* Content Panels */
+    .content-panel {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .content-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Panel Header style */
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .panel-header h2 {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: var(--font-header);
+    }
+
+    /* General Cards */
+    .info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    /* My Truck Tab Styles */
+    .truck-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    .detail-item {
+      background: #0D0D14;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .detail-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    /* Tables Styles */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 32px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Badges style */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 0;
+      letter-spacing: normal;
+      text-transform: uppercase;
+    }
+
+    .badge-green {
+      background: var(--green-glow);
+      color: var(--green-color);
+      border: 1px solid rgba(0, 200, 81, 0.2);
+    }
+
+    .badge-amber {
+      background: var(--amber-glow);
+      color: var(--amber-color);
+      border: 1px solid rgba(255, 187, 51, 0.2);
+    }
+
+    .badge-red {
+      background: var(--red-glow);
+      color: var(--red-color);
+      border: 1px solid rgba(255, 68, 68, 0.2);
+    }
+
+    /* Accept/Decline action buttons */
+    .btn-accept {
+      background: var(--green-color);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: var(--font-header);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .btn-accept:hover {
+      box-shadow: 0 0 10px rgba(0, 200, 81, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-decline {
+      background: var(--red-color);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: var(--font-header);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      margin-left: 8px;
+    }
+
+    .btn-decline:hover {
+      box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Trust Score Layout */
+    .trust-score-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .circle-score-box {
+      text-align: center;
+      position: relative;
+    }
+
+    .circle-svg {
+      width: 180px;
+      height: 180px;
+      transform: rotate(-90deg);
+    }
+
+    .circle-bg {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-width: 12;
+    }
+
+    .circle-progress {
+      fill: none;
+      stroke: var(--green-color);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 502;
+      /* 2 * PI * r (r=80) */
+      stroke-dashoffset: 65.26;
+      /* (100 - 87)% of 502 = 65.26 */
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    .circle-text-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .circle-number {
+      font-family: var(--font-header);
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--text-white);
+      line-height: 1;
+    }
+
+    .circle-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .trust-badge {
+      display: inline-block;
+      margin-top: 16px;
+      font-family: var(--font-header);
+      font-size: 12px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: #000;
+      padding: 6px 18px;
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Trust Progress Bars */
+    .progress-bars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .progress-bar-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .progress-bar-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      height: 8px;
+      background: #0D0D14;
+      border-radius: 50px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-color), var(--green-color));
+      border-radius: 50px;
+      width: 0;
+      /* Animated dynamically */
+      transition: width 1s ease-out;
+    }
+
+    /* Form Styles */
+    .post-space-form {
+      max-width: 500px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 992px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        margin-bottom: 20px;
+      }
+
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .trust-score-layout {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 30px;
+      }
+
+      .progress-bars-container {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .stats-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .truck-details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background Glow Orb -->
+  <div class="glow-orb orb-hero"></div>
+
+  <!-- TOP NAVBAR -->
+  <header class="navbar scrolled">
+    <div class="nav-container">
+      <!-- Logo left -->
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M7 17L17 7M17 7H7M17 7V17" />
+            <path d="M17 17L7 7M7 7H17M7 7V17" opacity="0.3" />
+          </svg>
+        </div>
+        Transit<span>OS</span> AI
+      </a>
+
+      <!-- Label Center -->
+      <div class="portal-label">Truck Owner Portal</div>
+
+      <!-- Profile/Logout Right -->
+      <div class="user-profile">
+        <span id="user-display" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Operator
+          Portal</span>
+        <div class="avatar" id="avatar-initials">O</div>
+        <button class="btn btn-outline" style="padding: 8px 16px; font-size: 12px;"
+          onclick="logoutUser()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD WRAPPER -->
+  <div class="container">
+    <div class="dashboard-container">
+
+      <!-- LEFT SIDEBAR -->
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li>
+            <a class="sidebar-link active" data-tab="tab-truck">
+              <svg viewBox="0 0 24 24">
+                <rect x="1" y="3" width="15" height="13" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+              My Truck
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-post">
+              <svg viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Post Available Space
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-matched">
+              <svg viewBox="0 0 24 24">
+                <polygon points="12 2 2 7 12 12 22 7" />
+                <polyline points="2 17 12 22 22 17" />
+              </svg>
+              Matched Requests
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-shipments">
+              <svg viewBox="0 0 24 24">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              Active Shipments
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-trust">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              My Trust Score
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-history">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              Trip History
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-tab="tab-copilot">
+              <svg viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              AI Copilot
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- MAIN PANEL CONTENT -->
+      <main class="dashboard-main">
+
+        <!-- STATS BAR -->
+        <div class="stats-bar">
+          <!-- Total Trips -->
+          <div class="stat-card-box accent-glow">
+            <div class="stat-card-title">Total Trips</div>
+            <div class="stat-card-value" id="stats-trips">0</div>
+            <div class="stat-card-sub text-muted">Completed runs</div>
+          </div>
+          <!-- Earnings -->
+          <div class="stat-card-box accent-glow">
+            <div class="stat-card-title">Earnings This Month</div>
+            <div class="stat-card-value" id="stats-earnings">₹0</div>
+            <div class="stat-card-sub green-text">↑ Direct earnings yield</div>
+          </div>
+          <!-- Reliability Score -->
+          <div class="stat-card-box green-glow">
+            <div class="stat-card-title">Reliability Score</div>
+            <div class="stat-card-value" style="color: var(--green-color);" id="stats-reliability">0/100</div>
+            <div class="stat-card-sub green-text">● Dynamic Profile</div>
+          </div>
+          <!-- Utilization -->
+          <div class="stat-card-box accent-glow">
+            <div class="stat-card-title">Utilization Rate</div>
+            <div class="stat-card-value" id="stats-utilization">0%</div>
+            <div class="stat-card-sub text-muted">Corridor occupancy rate</div>
+          </div>
+        </div>
+
+        <!-- TAB PANELS -->
+
+        <!-- 1. MY TRUCK PANEL (Default) -->
+        <div class="content-panel active" id="panel-truck">
+          <div class="panel-header">
+            <h2>My Truck Details</h2>
+            <button class="btn btn-outline" id="edit-truck-btn">Edit Details</button>
+          </div>
+
+          <div class="info-card">
+            <div class="truck-details-grid">
+              <div class="detail-item">
+                <div class="detail-label">Active Route Corridor</div>
+                <div class="detail-value" id="truck-val-route">Delhi NCR ➔ Mumbai Nhava Sheva</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Total Load Capacity</div>
+                <div class="detail-value" id="truck-val-capacity">25 Tons</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Current Free Space</div>
+                <div class="detail-value" id="truck-val-space">10 Tons</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Truck Status</div>
+                <div class="detail-value" id="truck-val-status" style="color: var(--green-color);">In Transit</div>
+              </div>
+            </div>
+
+            <!-- Edit Details inline form (hidden initially) -->
+            <form id="edit-truck-form"
+              style="display: none; border-top: 1px solid var(--border-color); padding-top: 24px;">
+              <h3 style="font-family: var(--font-header); font-size: 18px; margin-bottom: 16px;">Update Details</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="edit-route">Route</label>
+                  <input type="text" id="edit-route" class="form-input" value="Delhi NCR ➔ Mumbai Nhava Sheva">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="edit-capacity">Capacity (Tons)</label>
+                  <input type="number" id="edit-capacity" class="form-input" value="25">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="edit-space">Free Space (Tons)</label>
+                  <input type="number" id="edit-space" class="form-input" value="10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="edit-status">Status</label>
+                  <select id="edit-status" class="form-input" style="background: #0D0D14;">
+                    <option value="In Transit">In Transit</option>
+                    <option value="Idle / Waiting">Idle / Waiting</option>
+                    <option value="Maintenance">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-accent" style="padding: 10px 24px; font-size: 13px;">Save
+                  Changes</button>
+                <button type="button" class="btn btn-outline" id="edit-cancel-btn"
+                  style="padding: 10px 24px; font-size: 13px;">Cancel</button>
+              </div>
+            </form>
+
+            <button class="btn btn-accent" id="btn-post-space-trigger"
+              style="width: 100%; padding: 16px; margin-top: 10px; font-size: 16px; box-shadow: 0 4px 20px rgba(255, 69, 0, 0.3);">
+              Post Available Space Now
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. POST AVAILABLE SPACE PANEL -->
+        <div class="content-panel" id="panel-post">
+          <div class="panel-header">
+            <h2>Post Available Capacity</h2>
+          </div>
+          <div class="info-card">
+            <form id="post-space-form" class="post-space-form">
+              <div class="form-group">
+                <label class="form-label" for="post-route">Planned Corridor Route</label>
+                <input type="text" id="post-route" class="form-input" placeholder="e.g. Mumbai ➔ Ahmedabad" required>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="post-space">Available Free Space (Tons)</label>
+                  <input type="number" id="post-space" class="form-input" placeholder="e.g. 12" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="post-date">Available From Date</label>
+                  <input type="date" id="post-date" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="truck-contact-number">YOUR CONTACT NUMBER</label>
+                <input type="tel" id="truck-contact-number" class="form-input" placeholder="e.g. +91 98765 43210" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="post-comments">Special Handling / Comments</label>
+                <textarea id="post-comments" class="form-input" rows="3"
+                  placeholder="e.g. Temperature control, fragile goods packaging support available"></textarea>
+              </div>
+              <button type="submit" class="btn btn-accent" style="padding: 14px 28px;">Broadcast Space to
+                Network</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 3. MATCHED REQUESTS PANEL -->
+        <div class="content-panel" id="panel-matched">
+          <div class="panel-header">
+            <h2>Matched Shipments Requests</h2>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Freight ID</th>
+                  <th>Weight</th>
+                  <th>Pickup</th>
+                  <th>Dropoff</th>
+                  <th>Match Score</th>
+                  <th>Estimated Payout</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="matches-table-body">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted);">No matching requests at the
+                    moment.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. ACTIVE SHIPMENTS PANEL -->
+        <div class="content-panel" id="panel-shipments">
+          <div class="panel-header">
+            <h2>Active Freight Shipments</h2>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shipment ID</th>
+                  <th>Assigned Load</th>
+                  <th>Pickup Node</th>
+                  <th>Destination Point</th>
+                  <th>Payout Value</th>
+                  <th>Tracking Status</th>
+                </tr>
+              </thead>
+              <tbody id="active-shipments-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted);">No active shipments.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. MY TRUST SCORE PANEL -->
+        <div class="content-panel" id="panel-trust">
+          <div class="panel-header">
+            <h2>Carrier Trust Profile</h2>
+          </div>
+          <div class="info-card">
+            <div class="trust-score-layout">
+              <!-- Circular display -->
+              <div class="circle-score-box">
+                <div style="position: relative; display: inline-block;">
+                  <svg class="circle-svg">
+                    <circle class="circle-bg" cx="90" cy="90" r="80" />
+                    <circle class="circle-progress" id="circle-stroke-fill" cx="90" cy="90" r="80"
+                      style="stroke-dashoffset: 502;" />
+                  </svg>
+                  <div class="circle-text-container">
+                    <div class="circle-number" id="circle-score-num">0</div>
+                    <div class="circle-label">Trust Score</div>
+                  </div>
+                </div>
+                <div>
+                  <span class="trust-badge" id="trust-badge-label">BASIC CARRIER</span>
+                </div>
+              </div>
+
+              <!-- Progress Bars -->
+              <div class="progress-bars-container">
+                <!-- Bar 1: On-Time Rate -->
+                <div class="progress-bar-group">
+                  <div class="progress-bar-header">
+                    <span>On-Time Delivery Rate</span>
+                    <span id="on-time-val">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" id="fill-on-time" style="width: 0%;"></div>
+                  </div>
+                </div>
+                <!-- Bar 2: Safety Score -->
+                <div class="progress-bar-group">
+                  <div class="progress-bar-header">
+                    <span>Cargo Safety Rating</span>
+                    <span id="safety-val">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" id="fill-safety" style="width: 0%;"></div>
+                  </div>
+                </div>
+                <!-- Bar 3: Customer Rating -->
+                <div class="progress-bar-group">
+                  <div class="progress-bar-header">
+                    <span>Shipper Satisfaction Rating</span>
+                    <span id="rating-val">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" id="fill-rating" style="width: 0%;"></div>
+                  </div>
+                </div>
+                <!-- Bar 4: Completion Rate -->
+                <div class="progress-bar-group">
+                  <div class="progress-bar-header">
+                    <span>Bid-to-Trip Completion Rate</span>
+                    <span id="completion-val">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" id="fill-completion" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. TRIP HISTORY PANEL -->
+        <div class="content-panel" id="panel-history">
+          <div class="panel-header">
+            <h2>Completed Trip Ledger</h2>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Trip ID</th>
+                  <th>Route Completed</th>
+                  <th>Shipper Partner</th>
+                  <th>Cargo Category</th>
+                  <th>Net Payout</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="trip-history-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted);">No trip history.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- COPILOT CHAT TAB -->
+        <div class="content-panel" id="panel-copilot" style="display: flex; flex-direction: column; height: 600px;">
+          <div class="panel-header">
+            <h2>AI Freight Copilot</h2>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Ask about routes, demand forecasts, and logistics optimization</p>
+          </div>
+          
+          <div class="info-card" style="display: flex; flex-direction: column; flex: 1; padding: 0;">
+            <!-- Chat Messages Area -->
+            <div id="copilot-messages" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: flex-start;">
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); padding: 12px 16px; border-radius: 10px; max-width: 70%; line-height: 1.5;">
+                  <p style="margin: 0; font-size: 13px;">Hello! I'm your Freight Copilot. Ask me about:</p>
+                  <ul style="margin: 8px 0 0 0; padding-left: 16px; font-size: 12px;">
+                    <li>Route risk analysis</li>
+                    <li>7-day demand forecasts</li>
+                    <li>Weather and congestion impacts</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="copilot-input" class="form-input" style="flex: 1; margin: 0;" placeholder="e.g. Route risk Mumbai to Pune tomorrow" autocomplete="off">
+              <button id="copilot-send-btn" class="btn btn-accent" style="padding: 12px 24px; white-space: nowrap;">Send</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <style>
+    #copilot-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    #copilot-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #copilot-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 69, 0, 0.3);
+      border-radius: 3px;
+    }
+    #copilot-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 69, 0, 0.5);
+    }
+  </style>
+
+  <script>
+    const copilotInput = document.getElementById('copilot-input');
+    const copilotSendBtn = document.getElementById('copilot-send-btn');
+    const copilotMessages = document.getElementById('copilot-messages');
+
+    function appendCopilotMessage(text, isUser = false) {
+      const msgDiv = document.createElement('div');
+      msgDiv.style.display = 'flex';
+      msgDiv.style.justifyContent = isUser ? 'flex-end' : 'flex-start';
+      
+      const bubble = document.createElement('div');
+      bubble.style.maxWidth = '70%';
+      bubble.style.padding = '12px 16px';
+      bubble.style.borderRadius = '10px';
+      bubble.style.fontSize = '13px';
+      bubble.style.lineHeight = '1.5';
+      
+      if (isUser) {
+        bubble.style.background = 'var(--accent-color)';
+        bubble.style.color = 'white';
+        bubble.style.fontWeight = '600';
+      } else {
+        bubble.style.background = 'var(--card-bg)';
+        bubble.style.border = '1px solid var(--border-color)';
+        bubble.style.borderLeft = '3px solid var(--accent-color)';
+        bubble.style.color = 'var(--text-white)';
+      }
+      
+      bubble.innerHTML = text.split('\n').map(line => line ? `<div style="margin-bottom: 4px;">${line}</div>` : '<br>').join('');
+      msgDiv.appendChild(bubble);
+      copilotMessages.appendChild(msgDiv);
+      copilotMessages.scrollTop = copilotMessages.scrollHeight;
+    }
+
+    function sendCopilotMessage() {
+      const prompt = copilotInput.value.trim();
+      if (!prompt) return;
+      
+      appendCopilotMessage(prompt, true);
+      copilotInput.value = '';
+      
+      const typingDiv = document.createElement('div');
+      typingDiv.style.display = 'flex';
+      typingDiv.style.justifyContent = 'flex-start';
+      const typingBubble = document.createElement('div');
+      typingBubble.style.background = 'var(--card-bg)';
+      typingBubble.style.border = '1px solid var(--border-color)';
+      typingBubble.style.borderLeft = '3px solid var(--accent-color)';
+      typingBubble.style.padding = '12px 16px';
+      typingBubble.style.borderRadius = '10px';
+      typingBubble.innerHTML = '<span style="color: var(--text-muted); font-size: 12px;">Analyzing...</span>';
+      typingDiv.appendChild(typingBubble);
+      copilotMessages.appendChild(typingDiv);
+      copilotMessages.scrollTop = copilotMessages.scrollHeight;
+      
+      fetch('/copilot-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt })
+      })
+      .then(r => r.json())
+      .then(data => {
+        typingDiv.remove();
+        if (data.status === 'success') {
+          appendCopilotMessage(data.response);
+        } else {
+          appendCopilotMessage(`Error: ${data.message || 'Unable to process'}`, false);
+        }
+      })
+      .catch(() => {
+        typingDiv.remove();
+        appendCopilotMessage('Connection error. Please check the server.', false);
+      });
+    }
+
+    copilotSendBtn.addEventListener('click', sendCopilotMessage);
+    copilotInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendCopilotMessage();
+    });
+  </script>
+
+  <!-- Load Supabase Config, SDK and Session Guards -->
+  <script src="supabase-config.js?v=2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js?v=2"></script>
+
+  <script>
+    // 1. Guard Dashboard page session
+    window.guardDashboard('truck_owner');
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Display User data in Header
+      const user = window.getCurrentUser();
+      if (user) {
+        const name = user.user_metadata?.full_name || user.email;
+        document.getElementById('user-display').textContent = `🚛 ${name}`;
+
+        // Compute Avatar initials
+        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('avatar-initials').textContent = initials;
+      }
+
+      // 2. TAB TOGGLING LOGIC
+      const sidebarLinks = document.querySelectorAll('.sidebar-link');
+      const panels = document.querySelectorAll('.content-panel');
+
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          // Toggle active class on sidebar links
+          sidebarLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          // Toggle active panel
+          const targetTab = link.getAttribute('data-tab');
+          panels.forEach(panel => {
+            panel.classList.remove('active');
+            if (panel.id === `panel-${targetTab.substring(4)}`) {
+              panel.classList.add('active');
+            }
+          });
+
+          // Re-trigger trust progress bar animations if trust tab is opened
+          if (targetTab === 'tab-trust') {
+            animateTrustScore();
+          }
+        });
+      });
+
+      // Quick trigger to "Post Space" panel from "My Truck" CTA button
+      const postSpaceTrigger = document.getElementById('btn-post-space-trigger');
+      if (postSpaceTrigger) {
+        postSpaceTrigger.addEventListener('click', () => {
+          const postLink = document.querySelector('[data-tab="tab-post"]');
+          if (postLink) postLink.click();
+        });
+      }
+
+      // 3. EDIT TRUCK FORM TOGGLES
+      const editBtn = document.getElementById('edit-truck-btn');
+      const cancelBtn = document.getElementById('edit-cancel-btn');
+      const editForm = document.getElementById('edit-truck-form');
+      const truckDetailGrid = document.querySelector('.truck-details-grid');
+
+      editBtn.addEventListener('click', () => {
+        editForm.style.display = 'block';
+        truckDetailGrid.style.display = 'none';
+        editBtn.style.display = 'none';
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        editForm.style.display = 'none';
+        truckDetailGrid.style.display = 'grid';
+        editBtn.style.display = 'block';
+      });
+
+      // Handle Edit Truck Details submission
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const routeVal = document.getElementById('edit-route').value;
+        const capacityVal = document.getElementById('edit-capacity').value;
+        const spaceVal = document.getElementById('edit-space').value;
+        const statusVal = document.getElementById('edit-status').value;
+
+        if (window.supabaseClient && !window.isLocalFallback) {
+          try {
+            const user = window.getCurrentUser();
+            const parts = routeVal.split('➔').map(p => p.trim());
+            const origin = parts[0] || 'Unknown';
+            const destination = parts[1] || 'Unknown';
+
+            const truckData = {
+              owner_id: user.id,
+              owner_name: user.user_metadata?.full_name || user.email,
+              origin: origin,
+              destination: destination,
+              capacity_kg: parseFloat(capacityVal) * 1000,
+              free_space_kg: parseFloat(spaceVal) * 1000,
+              status: statusVal === 'In Transit' ? 'busy' : 'available'
+            };
+
+            // Check if truck exists
+            const { data: existing } = await window.supabaseClient
+              .from('trucks')
+              .select('id')
+              .eq('owner_id', user.id);
+
+            if (existing && existing.length > 0) {
+              await window.supabaseClient
+                .from('trucks')
+                .update(truckData)
+                .eq('owner_id', user.id);
+            } else {
+              await window.supabaseClient
+                .from('trucks')
+                .insert([truckData]);
+            }
+
+            alert('Truck details updated successfully in Supabase.');
+            cancelBtn.click();
+            loadDashboardData(user);
+          } catch (err) {
+            console.error("Error saving truck details:", err);
+            alert("Failed to save truck details: " + err.message);
+          }
+        } else {
+          // Local fallback
+          const user = window.getCurrentUser();
+          const localTruck = {
+            origin: routeVal.split('➔')[0]?.trim() || 'Delhi',
+            destination: routeVal.split('➔')[1]?.trim() || 'Mumbai',
+            capacity_kg: parseFloat(capacityVal) * 1000,
+            free_space_kg: parseFloat(spaceVal) * 1000,
+            status: statusVal
+          };
+          localStorage.setItem(`transit_truck_${user.id}`, JSON.stringify(localTruck));
+          alert('Local Mode: Truck details updated successfully.');
+          cancelBtn.click();
+          loadDashboardData(user);
+        }
+      });
+
+      // 4. POST CAPACITY CAPACITY BROADCAST
+      const postForm = document.getElementById('post-space-form');
+      postForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const route = document.getElementById('post-route').value;
+        const space = document.getElementById('post-space').value;
+        const date = document.getElementById('post-date').value;
+        const contactNumber = document.getElementById('truck-contact-number').value;
+
+        if (window.supabaseClient && !window.isLocalFallback) {
+          try {
+            const user = window.getCurrentUser();
+            const parts = route.split('➔').map(p => p.trim());
+            const origin = parts[0] || 'Unknown';
+            const destination = parts[1] || 'Unknown';
+
+            const truckData = {
+              owner_id: user.id,
+              owner_name: user.user_metadata?.full_name || user.email,
+              origin: origin,
+              destination: destination,
+              capacity_kg: parseFloat(space) * 1000 * 1.5, // estimate total capacity
+              free_space_kg: parseFloat(space) * 1000,
+              status: 'available',
+              contact_number: contactNumber
+            };
+
+            const { data: existing } = await window.supabaseClient
+              .from('trucks')
+              .select('id')
+              .eq('owner_id', user.id);
+
+            if (existing && existing.length > 0) {
+              await window.supabaseClient
+                .from('trucks')
+                .update(truckData)
+                .eq('owner_id', user.id);
+            } else {
+              await window.supabaseClient
+                .from('trucks')
+                .insert([truckData]);
+            }
+
+            alert(`Capacity Broadcast Active!\nRoute: ${route}\nSpace: ${space} Tons\nAvailable From: ${date}`);
+            postForm.reset();
+            loadDashboardData(user);
+            const myTruckLink = document.querySelector('[data-tab="tab-truck"]');
+            if (myTruckLink) myTruckLink.click();
+          } catch (err) {
+            console.error("Broadcast error:", err);
+            alert("Failed to broadcast capacity: " + err.message);
+          }
+        } else {
+          // Local fallback
+          const user = window.getCurrentUser();
+          const localTruck = {
+            origin: route.split('➔')[0]?.trim() || 'Delhi',
+            destination: route.split('➔')[1]?.trim() || 'Mumbai',
+            capacity_kg: parseFloat(space) * 1000 * 1.5,
+            free_space_kg: parseFloat(space) * 1000,
+            status: 'Idle / Waiting',
+            contact_number: contactNumber
+          };
+          localStorage.setItem(`transit_truck_${user.id}`, JSON.stringify(localTruck));
+          alert(`Local Mode: Capacity Broadcast Active!\nRoute: ${route}\nSpace: ${space} Tons`);
+          postForm.reset();
+          loadDashboardData(user);
+          const myTruckLink = document.querySelector('[data-tab="tab-truck"]');
+          if (myTruckLink) myTruckLink.click();
+        }
+      });
+
+      // Load real dashboard data
+      if (user) {
+        loadDashboardData(user);
+      }
+    });
+
+    // 5. ANIMATE TRUST SCORES
+    function animateTrustScore() {
+      const fills = document.querySelectorAll('.progress-fill');
+      fills.forEach(fill => {
+        const width = fill.style.width;
+        fill.style.width = '0';
+        setTimeout(() => {
+          fill.style.width = width;
+        }, 100);
+      });
+    }
+
+    async function loadDashboardData(user) {
+      // 1. Fetch Truck Details
+      let truckId = null;
+      let hasTrips = false;
+      let totalTrips = 0;
+
+      if (window.supabaseClient && !window.isLocalFallback) {
+        try {
+          const { data: trucks } = await window.supabaseClient
+            .from('trucks')
+            .select('*')
+            .eq('owner_id', user.id);
+
+          if (trucks && trucks.length > 0) {
+            const truck = trucks[0];
+            truckId = truck.id;
+
+            // Render details
+            document.getElementById('truck-val-route').textContent = `${truck.origin} ➔ ${truck.destination}`;
+            document.getElementById('truck-val-capacity').textContent = `${(truck.capacity_kg / 1000).toFixed(0)} Tons`;
+            document.getElementById('truck-val-space').textContent = `${(truck.free_space_kg / 1000).toFixed(0)} Tons`;
+
+            const statusEl = document.getElementById('truck-val-status');
+            statusEl.textContent = truck.status === 'available' ? 'Idle / Waiting' : 'In Transit';
+            statusEl.style.color = truck.status === 'available' ? 'var(--amber-color)' : 'var(--green-color)';
+
+            // Populate forms
+            document.getElementById('edit-route').value = `${truck.origin} ➔ ${truck.destination}`;
+            document.getElementById('edit-capacity').value = (truck.capacity_kg / 1000).toFixed(0);
+            document.getElementById('edit-space').value = (truck.free_space_kg / 1000).toFixed(0);
+            document.getElementById('edit-status').value = truck.status === 'available' ? 'Idle / Waiting' : 'In Transit';
+            if (truck.contact_number) {
+              const contactEl = document.getElementById('truck-contact-number');
+              if (contactEl) contactEl.value = truck.contact_number;
+            }
+
+            // Query accepted matches for this truck
+            const { data: matches } = await window.supabaseClient
+              .from('matches')
+              .select('*')
+              .eq('truck_id', truckId)
+              .eq('status', 'accepted');
+
+            if (matches && matches.length > 0) {
+              hasTrips = true;
+              totalTrips = matches.length;
+              renderActiveTripsTable(matches);
+            } else {
+              document.getElementById('active-shipments-body').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No active shipments.</td></tr>`;
+              document.getElementById('trip-history-body').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No trip history.</td></tr>`;
+            }
+
+            // Query pending matches (or load potential freight requests)
+            const { data: freightRequests } = await window.supabaseClient
+              .from('freight_requests')
+              .select('*')
+              .eq('status', 'pending');
+
+            renderMatchedRequestsTable(freightRequests, truck);
+          } else {
+            // No truck listed
+            document.getElementById('truck-val-route').textContent = '--';
+            document.getElementById('truck-val-capacity').textContent = '0 Tons';
+            document.getElementById('truck-val-space').textContent = '0 Tons';
+            document.getElementById('truck-val-status').textContent = 'No Truck Registered';
+            document.getElementById('truck-val-status').style.color = 'var(--text-muted)';
+            document.getElementById('active-shipments-body').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Please list your truck first to get bookings.</td></tr>`;
+            document.getElementById('matches-table-body').innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">List your truck to see matching shipper requests.</td></tr>`;
+          }
+
+          // 2. Fetch Trust Score
+          const { data: trustScores } = await window.supabaseClient
+            .from('trust_scores')
+            .select('*')
+            .eq('truck_owner_id', user.id);
+
+          if (trustScores && trustScores.length > 0) {
+            renderTrustScores(trustScores[0]);
+          } else {
+            // No trust score record
+            renderTrustScores(null);
+          }
+
+        } catch (err) {
+          console.error("Error loading truck dashboard data:", err);
+        }
+      } else {
+        // Local fallback mode
+        const localTruckStr = localStorage.getItem(`transit_truck_${user.id}`);
+        if (localTruckStr) {
+          const truck = JSON.parse(localTruckStr);
+          document.getElementById('truck-val-route').textContent = `${truck.origin} ➔ ${truck.destination}`;
+          document.getElementById('truck-val-capacity').textContent = `${(truck.capacity_kg / 1000).toFixed(0)} Tons`;
+          document.getElementById('truck-val-space').textContent = `${(truck.free_space_kg / 1000).toFixed(0)} Tons`;
+          document.getElementById('truck-val-status').textContent = truck.status;
+          document.getElementById('truck-val-status').style.color = truck.status === 'Maintenance' ? 'var(--red-color)' : (truck.status === 'In Transit' ? 'var(--green-color)' : 'var(--amber-color)');
+          if (truck.contact_number) {
+            const contactEl = document.getElementById('truck-contact-number');
+            if (contactEl) contactEl.value = truck.contact_number;
+          }
+
+          // Render local mock matches
+          const localMatches = JSON.parse(localStorage.getItem('transit_mock_matches') || '[]');
+          // In local fallback, just simulate a list
+          if (localMatches.length > 0) {
+            hasTrips = true;
+            totalTrips = localMatches.length;
+            renderLocalTripsTable(localMatches);
+          }
+        }
+
+        // Render local mock trust score
+        const localTrust = {
+          reliability_score: 87,
+          on_time_rate: 92,
+          safety_rating: 89,
+          satisfaction_rating: 96,
+          completion_rate: 95
+        };
+        renderTrustScores(localTrust);
+      }
+
+      // 3. Render Top Stats Bar
+      const earnings = totalTrips * 3500;
+      document.getElementById('stats-trips').textContent = totalTrips;
+      document.getElementById('stats-earnings').textContent = `₹${earnings.toLocaleString('en-IN')}`;
+      document.getElementById('stats-utilization').textContent = hasTrips ? '68%' : '0%';
+    }
+
+    function renderTrustScores(score) {
+      const reliabilityScore = score ? parseInt(score.reliability_score || 0) : 0;
+      const onTime = score ? parseInt(score.on_time_rate || 0) : 0;
+      const safety = score ? parseInt(score.safety_rating || 0) : 0;
+      const satisfaction = score ? parseInt(score.satisfaction_rating || 0) : 0;
+      const completion = score ? parseInt(score.completion_rate || 0) : 0;
+
+      // Update Top Stats Card
+      document.getElementById('stats-reliability').textContent = `${reliabilityScore}/100`;
+
+      // Update Circular score
+      document.getElementById('circle-score-num').textContent = reliabilityScore;
+      const offset = 502 - (502 * reliabilityScore / 100);
+      document.getElementById('circle-stroke-fill').style.strokeDashoffset = offset;
+
+      // Badge
+      const badgeLabel = document.getElementById('trust-badge-label');
+      if (reliabilityScore >= 90) {
+        badgeLabel.textContent = 'GOLD CARRIER';
+        badgeLabel.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
+      } else if (reliabilityScore >= 80) {
+        badgeLabel.textContent = 'SILVER CARRIER';
+        badgeLabel.style.background = 'linear-gradient(135deg, #C0C0C0 0%, #808080 100%)';
+      } else {
+        badgeLabel.textContent = 'BASIC CARRIER';
+        badgeLabel.style.background = 'linear-gradient(135deg, #CD7F32 0%, #8B4513 100%)';
+      }
+
+      // Progress bars
+      document.getElementById('on-time-val').textContent = `${onTime}%`;
+      document.getElementById('fill-on-time').style.width = `${onTime}%`;
+
+      document.getElementById('safety-val').textContent = `${safety}%`;
+      document.getElementById('fill-safety').style.width = `${safety}%`;
+
+      document.getElementById('rating-val').textContent = `${satisfaction}%`;
+      document.getElementById('fill-rating').style.width = `${satisfaction}%`;
+
+      document.getElementById('completion-val').textContent = `${completion}%`;
+      document.getElementById('fill-completion').style.width = `${completion}%`;
+    }
+
+    function renderActiveTripsTable(matches) {
+      const activeBody = document.getElementById('active-shipments-body');
+      const historyBody = document.getElementById('trip-history-body');
+
+      activeBody.innerHTML = '';
+      historyBody.innerHTML = '';
+
+      matches.forEach(match => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>#S-${match.id.substring(0, 5).toUpperCase()}</td>
+          <td>Route Lock (NH-48)</td>
+          <td>Carrier Hub</td>
+          <td>Dropoff Point</td>
+          <td>₹3,500</td>
+          <td><span class="badge badge-green">In Transit</span></td>
+        `;
+        activeBody.appendChild(tr);
+
+        const histTr = document.createElement('tr');
+        histTr.innerHTML = `
+          <td>#T-${match.id.substring(0, 5).toUpperCase()}</td>
+          <td>Route Lock (NH-48)</td>
+          <td>Logistics Client</td>
+          <td>General Cargo</td>
+          <td>₹3,500</td>
+          <td><span class="badge badge-green">Paid Out</span></td>
+        `;
+        historyBody.appendChild(histTr);
+      });
+    }
+
+    function renderLocalTripsTable(matches) {
+      const activeBody = document.getElementById('active-shipments-body');
+      const historyBody = document.getElementById('trip-history-body');
+
+      activeBody.innerHTML = '';
+      historyBody.innerHTML = '';
+
+      matches.forEach(match => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>#S-${match.id.substring(0, 5).toUpperCase()}</td>
+          <td>${match.pickup} ➔ ${match.dropoff}</td>
+          <td>Network Depot</td>
+          <td>Designated Dropoff</td>
+          <td>₹3,500</td>
+          <td><span class="badge badge-green">In Transit</span></td>
+        `;
+        activeBody.appendChild(tr);
+
+        const histTr = document.createElement('tr');
+        histTr.innerHTML = `
+          <td>#T-${match.id.substring(0, 5).toUpperCase()}</td>
+          <td>${match.pickup} ➔ ${match.dropoff}</td>
+          <td>Logistics Client</td>
+          <td>General Cargo</td>
+          <td>₹3,500</td>
+          <td><span class="badge badge-green">Paid Out</span></td>
+        `;
+        historyBody.appendChild(histTr);
+      });
+    }
+
+    function renderMatchedRequestsTable(freightRequests, truck) {
+      const body = document.getElementById('matches-table-body');
+      if (!body) return;
+
+      if (!freightRequests || freightRequests.length === 0) {
+        body.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No matching requests at the moment.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = '';
+      freightRequests.forEach(req => {
+        const matchScore = (req.pickup === truck.origin && req.dropoff === truck.destination) ? 96 : Math.floor(65 + Math.random() * 20);
+        const cost = 3500; // Average per trip payout
+
+        const tr = document.createElement('tr');
+        tr.id = `match-row-${req.id}`;
+        tr.innerHTML = `
+          <td>#F-${req.id.substring(0, 5).toUpperCase()}</td>
+          <td>${(req.weight_kg / 1000).toFixed(0)} Tons</td>
+          <td>${escapeHtml(req.pickup)}</td>
+          <td>${escapeHtml(req.dropoff)}</td>
+          <td><span class="badge badge-green">${matchScore} / 100</span></td>
+          <td>₹${cost.toLocaleString()}</td>
+          <td>
+            <button class="btn-accept" onclick="acceptMatchOpportunity('${req.id}', '${truck.id}', ${cost}, ${matchScore})">Accept</button>
+            <button class="btn-decline" onclick="declineMatch('match-row-${req.id}')">Decline</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    async function acceptMatchOpportunity(freightId, truckId, cost, matchScore) {
+      if (confirm(`Accept this shipment request for estimated payout ₹${cost.toLocaleString()}?`)) {
+        if (window.supabaseClient && !window.isLocalFallback) {
+          try {
+            // Update request status
+            await window.supabaseClient
+              .from('freight_requests')
+              .update({ status: 'matched' })
+              .eq('id', freightId);
+
+            // Create match record
+            await window.supabaseClient
+              .from('matches')
+              .insert([{
+                truck_id: truckId,
+                freight_id: freightId,
+                match_score: matchScore,
+                status: 'accepted'
+              }]);
+
+            // Update truck status
+            await window.supabaseClient
+              .from('trucks')
+              .update({ status: 'busy' })
+              .eq('id', truckId);
+
+            alert('Success! Route lock active. Digital payment ledger created.');
+            const user = window.getCurrentUser();
+            loadDashboardData(user);
+          } catch (err) {
+            console.error("Error accepting match:", err);
+            alert("Failed to accept match: " + err.message);
+          }
+        } else {
+          // Local Mode fallback
+          alert('Local Mode: Match opportunity accepted.');
+        }
+      }
+    }
+
+    // Fallbacks for inline click compatibility
+    function acceptMatch(rowId, freightId, cost) {
+      alert('Match accepted. Digital ledger created.');
+    }
+
+    function declineMatch(rowId) {
+      if (confirm('Decline this match opportunity?')) {
+        const row = document.getElementById(rowId);
+        if (row) {
+          row.style.transition = 'all 0.4s ease';
+          row.style.opacity = '0';
+          setTimeout(() => row.remove(), 400);
+        }
+      }
+    }
+
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — TransitOS AI</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="glow-orb orb-left"></div>
+  <div class="glow-orb orb-right"></div>
+
+  <div class="auth-wrapper">
+    <!-- Logo -->
+    <a href="index.html" class="logo-container">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 17L17 7M17 7H7M17 7V17" />
+          <path d="M17 17L7 7M7 7H17M7 7V17" opacity="0.3"/>
+        </svg>
+      </div>
+      Transit<span>OS</span> AI
+    </a>
+
+    <!-- Card -->
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="auth-title">Create Account</h2>
+        <p class="auth-subtitle">Join India's predictive B2B freight network</p>
+      </div>
+
+      <!-- Dev Mode Banner -->
+      <div class="dev-banner" id="dev-mode-banner" style="display: none;">
+        <span class="dev-banner-dot"></span>
+        Running in Local Dev Mode (No Supabase keys set in supabase-config.js)
+      </div>
+
+      <!-- Error Message Banner -->
+      <div class="error-banner" id="error-message-banner"></div>
+
+      <form id="signup-form">
+        <!-- Full Name -->
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" class="form-input" placeholder="e.g. Ramesh Kumar" required>
+        </div>
+
+        <!-- Email Address -->
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Email Address</label>
+          <input type="email" id="signup-email" class="form-input" placeholder="you@company.com" required>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="signup-password">Password</label>
+          <input type="password" id="signup-password" class="form-input" placeholder="Minimum 6 characters" minlength="6" required>
+        </div>
+
+        <!-- Role Toggle (I am a) -->
+        <label class="form-label">I am a:</label>
+        <div class="role-toggle-group">
+          <div class="role-option">
+            <input type="radio" id="role-company" name="user-role" value="company" checked>
+            <label for="role-company" class="role-label">Company / Shipper</label>
+          </div>
+          <div class="role-option">
+            <input type="radio" id="role-trucker" name="user-role" value="truck_owner">
+            <label for="role-trucker" class="role-label">Truck Owner</label>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" id="submit-btn">Sign Up</button>
+
+        <!-- Redirect Link -->
+        <p class="auth-footer-link">
+          Already have an account? <a href="login.html">Login</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Load Supabase Config & SDK CDN -->
+  <script src="supabase-config.js?v=2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js?v=2"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const devBanner = document.getElementById('dev-mode-banner');
+      const errorBanner = document.getElementById('error-message-banner');
+      const form = document.getElementById('signup-form');
+      const submitBtn = document.getElementById('submit-btn');
+
+      // Check if fallback mode is active
+      if (window.isLocalFallback) {
+        devBanner.style.display = 'flex';
+      }
+
+      // Pre-select role based on landing page selection
+      const urlParams = new URLSearchParams(window.location.search);
+      const roleParam = urlParams.get('role');
+      if (roleParam === 'truck_owner') {
+        document.getElementById('role-trucker').checked = true;
+      } else if (roleParam === 'company') {
+        document.getElementById('role-company').checked = true;
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        errorBanner.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account...';
+
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const role = document.querySelector('input[name="user-role"]:checked').value;
+
+        const result = await signUpUser(name, email, password, role);
+
+        if (result.success) {
+          if (result.localMode) {
+            // Local fallback auto-login and redirect
+            if (role === 'company') {
+              window.location.href = 'company-dashboard.html';
+            } else {
+              window.location.href = 'truck-dashboard.html';
+            }
+          } else {
+            // Real Supabase signup completed
+            alert(result.message);
+            window.location.href = 'login.html';
+          }
+        } else {
+          errorBanner.textContent = result.message;
+          errorBanner.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign Up';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

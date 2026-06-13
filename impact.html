@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact Dashboard — TransitOS AI</title>
+  
+  <link rel="stylesheet" href="index.css">
+  <style>
+    :root {
+      --bg-color: #0D0D14;
+      --card-bg: #16162A;
+      --accent-color: #FF4500;
+      --green-color: #00C851;
+      --green-glow: rgba(0, 200, 81, 0.15);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --font-header: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .impact-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 120px 24px 60px 24px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* TOP NAVBAR */
+    .portal-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--green-color);
+      border: 1px solid rgba(0, 200, 81, 0.3);
+      padding: 4px 12px;
+      border-radius: 6px;
+      background: rgba(0, 200, 81, 0.05);
+      font-family: var(--font-header);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Stats Grid */
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .impact-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 28px 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .impact-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 69, 0, 0.2);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    .impact-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-color);
+    }
+
+    .impact-card.green-theme::before {
+      background: var(--green-color);
+    }
+
+    .impact-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .impact-value {
+      font-family: var(--font-header);
+      font-size: 32px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .impact-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Table styling */
+    .ledger-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .ledger-header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    .ledger-title {
+      font-family: var(--font-header);
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .ledger-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .badge-lock {
+      background: var(--green-glow);
+      color: var(--green-color);
+      border: 1px solid rgba(0, 200, 81, 0.2);
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px auto;
+    }
+
+    .empty-state-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .empty-message {
+      font-size: 15px;
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Responsiveness */
+    @media (max-width: 992px) {
+      .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .impact-grid {
+        grid-template-columns: 1fr;
+      }
+      .impact-container {
+        padding-top: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Glow Orb -->
+  <div class="glow-orb orb-hero" style="opacity: 0.12;"></div>
+
+  <!-- NAVBAR -->
+  <header class="navbar scrolled">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17L17 7M17 7H7M17 7V17" />
+            <path d="M17 17L7 7M7 7H17M7 7V17" opacity="0.3"/>
+          </svg>
+        </div>
+        Transit<span>OS</span> AI
+      </a>
+      
+      <div class="portal-label">Impact Dashboard</div>
+      
+      <div>
+        <a href="javascript:history.back()" class="btn btn-outline" style="padding: 8px 16px; font-size: 12px;">Back to Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="impact-container">
+    
+    <!-- STAT CARDS -->
+    <section class="impact-grid">
+      <!-- Total Bookings -->
+      <div class="impact-card">
+        <div class="impact-title">Total Bookings Completed</div>
+        <div class="impact-value" id="val-bookings">0</div>
+        <div class="impact-sub">Network volume lockups</div>
+      </div>
+      <!-- Fuel Saved -->
+      <div class="impact-card green-theme">
+        <div class="impact-title">Fuel Saved (Litres)</div>
+        <div class="impact-value" id="val-fuel">0 L</div>
+        <div class="impact-sub">Calculated backhaul diesel yield</div>
+      </div>
+      <!-- CO2 Stopped -->
+      <div class="impact-card green-theme">
+        <div class="impact-title">CO₂ Stopped (KG)</div>
+        <div class="impact-value" id="val-carbon" style="color: var(--green-color);">0 KG</div>
+        <div class="impact-sub">Net carbon emissions offset</div>
+      </div>
+      <!-- Money Saved -->
+      <div class="impact-card">
+        <div class="impact-title">Money Saved (₹)</div>
+        <div class="impact-value" id="val-money" style="color: #FFB300;">₹0</div>
+        <div class="impact-sub">Direct commercial savings</div>
+      </div>
+    </section>
+
+    <!-- LEDGER LIST -->
+    <section class="ledger-section">
+      <div class="ledger-header">
+        <h2 class="ledger-title">Environmental & Cost Savings Ledger</h2>
+        <p class="ledger-desc">Verifiable logs matching all corridor optimization events</p>
+      </div>
+
+      <div class="table-responsive">
+        <table id="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Route Corridor</th>
+              <th>Cargo Weight</th>
+              <th>Fuel Saved (L)</th>
+              <th>CO₂ Saved (kg)</th>
+              <th>Financial Savings</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+        
+        <!-- Empty state block -->
+        <div class="empty-state" id="ledger-empty-state" style="display: none;">
+          <div class="empty-state-icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <p class="empty-message">No completed bookings yet. Stats will appear here as deliveries are completed.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Supabase Integration -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://ikcaaxnnmhgmivihyrsv.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_NG1_VxdqetjhNYsbtg5axg_eoLw8uAL";
+    let supabaseClient = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Try to initialize Supabase
+      try {
+        if (window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+      } catch (err) {
+        console.warn("Supabase init failed. Local storage mode active.", err);
+      }
+
+      loadImpactData();
+    });
+
+    async function loadImpactData() {
+      let acceptedMatches = [];
+      let freightRequests = [];
+
+      // Check if we are in local fallback mode (offline)
+      const sessionStr = localStorage.getItem('transit_session');
+      const isLocal = !supabaseClient || (sessionStr && JSON.parse(sessionStr).localMode);
+
+      if (!isLocal && supabaseClient) {
+        try {
+          // Fetch accepted matches
+          const { data: matches, error: matchesError } = await supabaseClient
+            .from('matches')
+            .select('*')
+            .eq('status', 'accepted');
+
+          if (matchesError) throw matchesError;
+
+          // Fetch freight requests to join routes/weights
+          const { data: freights, error: freightsError } = await supabaseClient
+            .from('freight_requests')
+            .select('*');
+
+          if (freightsError) throw freightsError;
+
+          acceptedMatches = matches || [];
+          freightRequests = freights || [];
+
+        } catch (err) {
+          console.error("Error fetching from Supabase, falling back to local storage:", err);
+          loadFromLocalStorage();
+          return;
+        }
+      } else {
+        loadFromLocalStorage();
+        return;
+      }
+
+      renderDashboard(acceptedMatches, freightRequests);
+    }
+
+    function loadFromLocalStorage() {
+      const localMatches = JSON.parse(localStorage.getItem('transit_mock_matches') || '[]');
+      
+      const mappedMatches = localMatches.map(m => ({
+        id: m.id,
+        created_at: m.created_at,
+        freight_id: m.id // mock relation
+      }));
+
+      const mappedFreights = localMatches.map(m => ({
+        id: m.id,
+        pickup: m.pickup,
+        dropoff: m.dropoff,
+        weight_kg: m.weight_kg
+      }));
+
+      renderDashboard(mappedMatches, mappedFreights);
+    }
+
+    function renderDashboard(matches, freights) {
+      const bookingsCount = matches.length;
+      const fuelSaved = bookingsCount * 180 * 0.3;
+      const co2Stopped = fuelSaved * 2.68;
+      const moneySaved = fuelSaved * 90;
+
+      // Render top cards
+      document.getElementById('val-bookings').textContent = bookingsCount;
+      document.getElementById('val-fuel').textContent = `${fuelSaved.toLocaleString('en-IN', { maximumFractionDigits: 1 })} L`;
+      document.getElementById('val-carbon').textContent = `${co2Stopped.toLocaleString('en-IN', { maximumFractionDigits: 1 })} KG`;
+      document.getElementById('val-money').textContent = `₹${moneySaved.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+
+      const body = document.getElementById('ledger-body');
+      const emptyState = document.getElementById('ledger-empty-state');
+
+      if (bookingsCount === 0) {
+        body.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      body.innerHTML = '';
+
+      matches.forEach(match => {
+        const req = freights.find(f => f.id === match.freight_id);
+        const date = new Date(match.created_at).toLocaleDateString('en-IN', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+        const route = req ? `${escapeHtml(req.pickup)} ➔ ${escapeHtml(req.dropoff)}` : 'Unknown Corridor';
+        const weight = req ? `${(req.weight_kg).toLocaleString('en-IN')} KG` : '--';
+        
+        const mFuel = 180 * 0.3;
+        const mCarbon = mFuel * 2.68;
+        const mMoney = mFuel * 90;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${date}</td>
+          <td><strong>${route}</strong></td>
+          <td>${weight}</td>
+          <td>${mFuel.toFixed(1)} L</td>
+          <td>${mCarbon.toFixed(1)} kg</td>
+          <td style="color: #FFB300; font-weight: 700;">₹${mMoney.toLocaleString('en-IN')}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

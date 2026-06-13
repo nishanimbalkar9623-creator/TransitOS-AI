@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>National Freight Control — TransitOS AI</title>
+  <link rel="stylesheet" href="index.css">
+  <style>
+    /* Custom Control Center overrides */
+    body {
+      background-color: #08080C;
+      color: #E2E2EC;
+      overflow-x: hidden;
+    } 
+
+    .control-header {
+      background: rgba(13, 13, 20, 0.9);
+      border-bottom: 1px solid rgba(255, 69, 0, 0.2);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .control-title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      font-family: var(--font-header);
+    }
+
+    .control-title h1 span {
+      color: var(--accent-color);
+    }
+
+    .control-title p {
+      font-size: 11px;
+      color: #8E8E9F;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+
+    /* Status Grid */
+    .control-status-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .control-stat-card {
+      background: #111122;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .control-stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-color);
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+
+    .control-stat-card.green-theme::before {
+      background: #00C851;
+    }
+
+    .control-stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #8E8E9F;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .control-stat-value {
+      font-family: var(--font-header);
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    /* Grid Layout for map, feed and charts */
+    .control-layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      padding: 0 24px 24px 24px;
+    }
+
+    .map-container-card {
+      background: #111122;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 580px;
+    }
+
+    .map-title {
+      align-self: flex-start;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      font-family: var(--font-header);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Live Feed Sidebar */
+    .feed-panel {
+      background: #111122;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-height: 580px;
+    }
+
+    .feed-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 12px;
+    }
+
+    .feed-list {
+      list-style: none;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 4px;
+    }
+
+    .feed-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .feed-list::-webkit-scrollbar-thumb {
+      background: #222235;
+      border-radius: 2px;
+    }
+
+    .feed-item {
+      background: #0D0D14;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.4;
+      animation: feedSlide 0.3s ease;
+    }
+
+    @keyframes feedSlide {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Styled India Map */
+    .map-svg {
+      width: 100%;
+      max-width: 460px;
+      height: 480px;
+      background: transparent;
+      z-index: 10;
+    }
+
+    .india-outline {
+      fill: #0D0D14;
+      stroke: rgba(255, 69, 0, 0.2);
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.03));
+      transition: all 0.5s ease;
+    }
+
+    /* Routes path lines */
+    .route-line {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.12);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all 0.5s ease;
+    }
+
+    .route-active {
+      stroke: rgba(255, 69, 0, 0.4);
+      stroke-dasharray: 6, 6;
+      animation: dash 30s linear infinite;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    /* Pulsing city node dots */
+    .city-node {
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .city-node:hover {
+      transform: scale(1.3);
+    }
+
+    .city-dot {
+      fill: #FFA500;
+      stroke: #08080C;
+      stroke-width: 1.5;
+    }
+
+    .city-dot.pulse-red {
+      fill: #ff4444;
+      animation: redGlow 1.5s infinite;
+    }
+
+    .city-dot.pulse-green {
+      fill: #00C851;
+      animation: greenGlow 1.5s infinite;
+    }
+
+    @keyframes redGlow {
+      0% { r: 5; filter: drop-shadow(0 0 0px #ff4444); }
+      50% { r: 7; filter: drop-shadow(0 0 8px #ff4444); }
+      100% { r: 5; filter: drop-shadow(0 0 0px #ff4444); }
+    }
+
+    @keyframes greenGlow {
+      0% { r: 5; filter: drop-shadow(0 0 0px #00C851); }
+      50% { r: 7; filter: drop-shadow(0 0 8px #00C851); }
+      100% { r: 5; filter: drop-shadow(0 0 0px #00C851); }
+    }
+
+    .city-label {
+      font-size: 8px;
+      font-weight: 700;
+      fill: #8E8E9F;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      pointer-events: none;
+      font-family: var(--font-header);
+    }
+
+    .city-label-val {
+      font-size: 7px;
+      font-weight: 700;
+      fill: #E2E2EC;
+      pointer-events: none;
+    }
+
+    /* Dynamic detours visualizer */
+    .route-reroute {
+      stroke: #ff4444;
+      stroke-width: 3.5;
+      filter: drop-shadow(0 0 5px #ff4444);
+      stroke-dasharray: 5, 5;
+      animation: dash 15s linear infinite;
+    }
+
+    /* Bottom row containing forecast chart and simulator controls */
+    .control-bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      padding: 0 24px 24px 24px;
+    }
+
+    .forecast-card {
+      background: #111122;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .forecast-svg {
+      width: 100%;
+      height: 180px;
+    }
+
+    .simulation-control-card {
+      background: #111122;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* Custom Toast notification dialog */
+    .crisis-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #16162A;
+      border: 2px solid #ff4444;
+      border-radius: 20px;
+      padding: 32px;
+      z-index: 1000;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 0 50px rgba(255, 68, 68, 0.25), 0 20px 40px rgba(0,0,0,0.7);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: center;
+    }
+
+    .crisis-toast.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      pointer-events: auto;
+    }
+
+    .toast-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 8, 12, 0.8);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .toast-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .toast-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 68, 68, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px auto;
+      border: 1px solid rgba(255, 68, 68, 0.3);
+    }
+
+    .toast-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: #ff4444;
+      stroke-width: 2.5;
+      fill: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .control-layout-grid {
+        grid-template-columns: 1fr;
+      }
+      .control-bottom-row {
+        grid-template-columns: 1fr;
+      }
+      .feed-panel {
+        max-height: 400px;
+      }
+      .control-status-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .control-status-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CONTROL TOP NAVBAR -->
+  <header class="control-header">
+    <div class="control-title">
+      <h1>Transit<span>OS</span> AI — National Control Room</h1>
+      <p>National Freight Intelligence Network Console</p>
+    </div>
+    
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <span style="font-size: 11px; font-weight: 700; color: #00C851; background: rgba(0,200,81,0.1); border: 1px solid rgba(0,200,81,0.2); padding: 4px 12px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+        <span style="width: 6px; height: 6px; background: #00C851; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite;"></span>
+        Operational Live Feed
+      </span>
+      <a href="index.html" class="btn btn-outline" style="padding: 8px 16px; font-size: 12px;">Back to Home</a>
+    </div>
+  </header>
+
+  <!-- LIVE METRIC BAR -->
+  <section class="control-status-row">
+    <!-- Active Trucks -->
+    <div class="control-stat-card">
+      <div class="control-stat-label">Active Trucks</div>
+      <div class="control-stat-value" id="cstat-active">12,847</div>
+    </div>
+    <!-- Empty Trucks -->
+    <div class="control-stat-card">
+      <div class="control-stat-label">Empty Trucks Today</div>
+      <div class="control-stat-value" id="cstat-empty" style="color: var(--accent-color);">42,000</div>
+    </div>
+    <!-- Savings Unlocked -->
+    <div class="control-stat-card green-theme">
+      <div class="control-stat-label">Savings Unlocked</div>
+      <div class="control-stat-value" id="cstat-savings" style="color: #00C851;">₹8.4 Cr</div>
+    </div>
+    <!-- CO2 Prevented -->
+    <div class="control-stat-card green-theme">
+      <div class="control-stat-label">CO₂ Prevented</div>
+      <div class="control-stat-value" id="cstat-carbon" style="color: #00C851;">2,840T</div>
+    </div>
+  </section>
+
+  <!-- MAIN DASHBOARD CONTENT AREA -->
+  <section class="control-layout-grid">
+    
+    <!-- India Map Panel -->
+    <div class="map-container-card">
+      <div class="map-title">Live Corridor Matchmaking Map</div>
+      
+      <!-- India Vector SVG map -->
+      <svg class="map-svg" viewBox="0 0 500 550">
+        
+        <!-- Simplified Sleek Outline of India -->
+        <path class="india-outline" d="M 230,40 L 260,80 L 265,110 L 290,130 L 315,150 L 330,175 L 345,200 L 330,230 L 340,250 L 365,260 L 360,280 L 320,285 L 305,310 L 285,340 L 265,390 L 255,420 L 245,460 L 235,510 L 225,470 L 210,410 L 195,360 L 180,335 L 165,310 L 140,290 L 125,275 L 130,250 L 145,230 L 140,200 L 165,175 L 185,175 L 195,145 L 205,125 L 210,95 L 218,65 Z" />
+        
+        <!-- CORRIDOR ROUTES LINES -->
+        <!-- Route 1: Delhi-Jaipur-Ahmedabad-Mumbai -->
+        <path class="route-line route-active" id="route-nh48" d="M 240,160 L 210,200 L 160,280 L 180,340" />
+        <!-- Route 2: Mumbai-Pune -->
+        <path class="route-line route-active" id="route-mum-pune" d="M 180,340 L 195,360" />
+        <!-- Route 3: Mumbai-Bangalore -->
+        <path class="route-line route-active" id="route-nh4" d="M 180,340 L 220,440" />
+        <!-- Route 4: Delhi-Kolkata -->
+        <path class="route-line route-active" id="route-nh2" d="M 240,160 L 340,280" />
+        <!-- Route 5: Bangalore-Chennai -->
+        <path class="route-line route-active" id="route-nh46" d="M 220,440 L 250,430" />
+        <!-- Route 6: Delhi-Hyderabad-Chennai -->
+        <path class="route-line route-active" id="route-nh44" d="M 240,160 L 240,370 L 250,430" />
+
+        <!-- DETOUR DYNAMIC LINES (FLOOD DETOUR - Hidden by default) -->
+        <path class="route-line" id="detour-line" d="M 180,340 L 150,380 L 195,360" />
+
+        <!-- MOVING TRUCKS ANIMATIONS -->
+        <!-- Truck 1: Delhi to Mumbai -->
+        <g>
+          <text font-size="12" fill="#FFA500">🚛</text>
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 240,160 L 210,200 L 160,280 L 180,340" />
+        </g>
+        <!-- Truck 2: Pune to Delhi -->
+        <g>
+          <text font-size="12" fill="#FFA500">🚛</text>
+          <animateMotion dur="11s" repeatCount="indefinite" path="M 195,360 L 180,340 L 160,280 L 210,200 L 240,160" />
+        </g>
+        <!-- Truck 3: Delhi to Kolkata -->
+        <g>
+          <text font-size="12" fill="#ff4444">🚛</text>
+          <animateMotion dur="9s" repeatCount="indefinite" path="M 240,160 L 340,280" />
+        </g>
+        <!-- Truck 4: Bangalore to Chennai -->
+        <g>
+          <text font-size="12" fill="#00C851">🚛</text>
+          <animateMotion dur="5s" repeatCount="indefinite" path="M 220,440 L 250,430" />
+        </g>
+
+        <!-- DYNAMIC DETOUR TRUCK (Hidden initially) -->
+        <g id="detour-truck" style="display: none;">
+          <text font-size="12" fill="#ff4444">🚛</text>
+          <animateMotion dur="4s" repeatCount="indefinite" path="M 180,340 L 150,380 L 195,360" />
+        </g>
+
+        <!-- CITIES NODES & Pulsing indicators -->
+        <!-- Delhi (Red pulse) -->
+        <g class="city-node" transform="translate(240,160)">
+          <circle class="city-dot pulse-red" r="5" />
+          <text class="city-label" x="10" y="-4">Delhi</text>
+          <text class="city-label-val" x="10" y="6" fill="#ff4444">+28% spike</text>
+        </g>
+
+        <!-- Kolkata (Red pulse) -->
+        <g class="city-node" transform="translate(340,280)">
+          <circle class="city-dot pulse-red" r="5" />
+          <text class="city-label" x="10" y="-4">Kolkata</text>
+          <text class="city-label-val" x="10" y="6" fill="#ff4444">+35% alert</text>
+        </g>
+
+        <!-- Mumbai (Orange stable) -->
+        <g class="city-node" transform="translate(180,340)">
+          <circle class="city-dot" r="5" fill="#FFA500" />
+          <text class="city-label" x="-45" y="-4">Mumbai</text>
+          <text class="city-label-val" x="-45" y="6">+12% active</text>
+        </g>
+
+        <!-- Pune (Orange stable) -->
+        <g class="city-node" transform="translate(195,360)">
+          <circle class="city-dot" r="5" fill="#FFA500" />
+          <text class="city-label" x="10" y="4">Pune</text>
+        </g>
+
+        <!-- Jaipur (Orange stable) -->
+        <g class="city-node" transform="translate(210,200)">
+          <circle class="city-dot" r="5" fill="#FFA500" />
+          <text class="city-label" x="-36" y="2">Jaipur</text>
+        </g>
+
+        <!-- Bangalore (Green stable capacity) -->
+        <g class="city-node" transform="translate(220,440)">
+          <circle class="city-dot pulse-green" r="5" />
+          <text class="city-label" x="-54" y="2">Bangalore</text>
+        </g>
+
+        <!-- Chennai (Green stable capacity) -->
+        <g class="city-node" transform="translate(250,430)">
+          <circle class="city-dot pulse-green" r="5" />
+          <text class="city-label" x="10" y="4">Chennai</text>
+        </g>
+
+        <!-- Ahmedabad -->
+        <g class="city-node" transform="translate(160,280)">
+          <circle class="city-dot" r="5" fill="#FFA500" />
+          <text class="city-label" x="-60" y="4">Ahmedabad</text>
+        </g>
+
+        <!-- Hyderabad -->
+        <g class="city-node" transform="translate(240,370)">
+          <circle class="city-dot" r="5" fill="#00C851" />
+          <text class="city-label" x="10" y="2">Hyderabad</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Live Intelligence Scrolling Feed -->
+    <div class="feed-panel">
+      <div class="feed-title">Live Intelligence Stream</div>
+      <ul class="feed-list" id="feed-ticker-container">
+        <li class="feed-item">🔴 Delhi demand spike +28% predicted in 3 days</li>
+        <li class="feed-item">🟡 NH-44 congestion risk detected — 68% probability</li>
+        <li class="feed-item">🟢 340 trucks matched on Pune➔Delhi corridor</li>
+        <li class="feed-item">🟢 ₹4.2L saved in last 2 hours</li>
+        <li class="feed-item">🔴 Kolkata demand +35% — reposition recommended</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- BOTTOM CONTROL ROW -->
+  <section class="control-bottom-row">
+    <!-- Demand Forecast Line Chart -->
+    <div class="forecast-card">
+      <div class="panel-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <h3 class="chart-title">AI Demand Forecast — Pune → Delhi Corridor</h3>
+        <span style="font-size: 11px; color: var(--text-muted);">Solid Blue: Actual | Dashed Orange: AI Predicted (Next 7 Days)</span>
+      </div>
+      <!-- SVG Forecast Line Chart -->
+      <svg class="forecast-svg" viewBox="0 0 760 170">
+        <!-- Grid lines -->
+        <line x1="40" y1="20" x2="720" y2="20" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+        <line x1="40" y1="70" x2="720" y2="70" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+        <line x1="40" y1="120" x2="720" y2="120" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+        <line x1="40" y1="150" x2="720" y2="150" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+        
+        <!-- Actual data path (Blue) -->
+        <path d="M 40,140 L 120,110 L 200,125 L 280,75 L 360,110" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+        
+        <!-- Predicted data path (Orange Dashed) -->
+        <path d="M 360,110 L 440,55 L 520,70 L 600,30 L 680,45 L 720,25" fill="none" stroke="#FF4500" stroke-width="3" stroke-dasharray="5,5" stroke-linecap="round"/>
+        
+        <!-- Forecast Nodes -->
+        <circle cx="360" cy="110" r="4.5" fill="#FF4500" />
+        <circle cx="600" cy="30" r="4.5" fill="#FF4500" />
+        
+        <!-- Node Text Values -->
+        <text x="600" y="20" fill="#FF4500" font-size="9" font-weight="700" text-anchor="middle">+42% Peak</text>
+        
+        <!-- X Axis Labels -->
+        <text x="40" y="165" fill="#8E8E9F" font-size="10">08 Jun</text>
+        <text x="160" y="165" fill="#8E8E9F" font-size="10">09 Jun</text>
+        <text x="280" y="165" fill="#8E8E9F" font-size="10">10 Jun</text>
+        <text x="400" y="165" fill="#8E8E9F" font-size="10">11 Jun (F)</text>
+        <text x="520" y="165" fill="#8E8E9F" font-size="10">12 Jun (F)</text>
+        <text x="640" y="165" fill="#8E8E9F" font-size="10">13 Jun (F)</text>
+        <text x="720" y="165" fill="#8E8E9F" font-size="10">14 Jun (F)</text>
+      </svg>
+    </div>
+
+    <!-- Simulator Control Buttons -->
+    <div class="simulation-control-card">
+      <button class="btn btn-accent" id="btn-simulate-crisis" style="background: #ff4444; border-color: #ff4444; box-shadow: 0 4px 20px rgba(255, 68, 68, 0.3); padding: 16px; font-size: 15px;">
+        ⚡ Simulate Crisis Mode
+      </button>
+      <button class="btn btn-outline" id="btn-reset-network" style="padding: 16px; font-size: 15px;">
+        🔄 Reset Network
+      </button>
+    </div>
+  </section>
+
+  <!-- DYNAMIC CRISIS TOAST -->
+  <div class="toast-overlay" id="crisis-overlay"></div>
+  <div class="crisis-toast" id="crisis-toast">
+    <div class="toast-icon">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <h3 style="font-family: var(--font-header); font-size: 22px; font-weight: 800; color: #ff4444; margin-bottom: 12px;">CRISIS SIMULATION ACTIVE</h3>
+    <p style="color: var(--text-white); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+      Flood detected near Mumbai. 340 trucks rerouted via NH-60. 3 districts alerted. Medicine shortage prevented.
+    </p>
+    <button class="btn btn-accent" id="close-toast-btn" style="background: #ff4444; border-color: #ff4444; width: 100%;">Acknowledge Rerouting</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // 1. LIVE ALERT FEED SIMULATION (Appends new items periodically)
+      const feedContainer = document.getElementById('feed-ticker-container');
+      const alertsPool = [
+        "🟢 Empty return loop optimized on NH-8: ₹34,000 saved",
+        "🔴 Kolkata demand spike +35% — reposition recommended",
+        "🟡 Monsoon delay warning: NH-48 speed reduced by 30%",
+        "🟢 340 trucks matched on Pune➔Delhi corridor",
+        "🟢 ₹4.2L saved in last 2 hours",
+        "🟡 Congestion alert at Mumbai port terminal: 4 hrs delay risk",
+        "🔴 Delhi demand spike +28% predicted in 3 days",
+        "🟢 Capacity matched: 12 tons chemicals on Ahmedabad➔Delhi",
+        "🟢 CO₂ emission saved: +4.2 tonnes on Chennai Loop",
+        "🟡 Fastag toll latency detected at Lonavala Toll Plaza"
+      ];
+
+      setInterval(() => {
+        // Pick a random alert
+        const text = alertsPool[Math.floor(Math.random() * alertsPool.length)];
+        
+        // Create element
+        const item = document.createElement('li');
+        item.className = 'feed-item';
+        item.textContent = text;
+
+        // Prepend to list
+        feedContainer.insertBefore(item, feedContainer.firstChild);
+
+        // Keep list to 10 entries max
+        if (feedContainer.children.length > 10) {
+          feedContainer.removeChild(feedContainer.lastChild);
+        }
+      }, 4000);
+
+      // 2. LIVE STATISTICS INCREMENTAL COUNTERS
+      const valActive = document.getElementById('cstat-active');
+      const valSavings = document.getElementById('cstat-savings');
+      const valCarbon = document.getElementById('cstat-carbon');
+      const valEmpty = document.getElementById('cstat-empty');
+
+      let currentActiveCount = 12847;
+      let currentEmptyCount = 42000;
+      let currentSavingsVal = 8.4;
+      let currentCarbonVal = 2840;
+
+      setInterval(() => {
+        // Increment statistics by minor random amounts
+        currentActiveCount += Math.floor(Math.random() * 5) - 2;
+        currentEmptyCount -= Math.floor(Math.random() * 4) - 2;
+        currentSavingsVal += Math.random() * 0.005;
+        currentCarbonVal += Math.floor(Math.random() * 2);
+
+        // Render values
+        valActive.textContent = currentActiveCount.toLocaleString('en-IN');
+        valEmpty.textContent = currentEmptyCount.toLocaleString('en-IN');
+        valSavings.textContent = `₹${currentSavingsVal.toFixed(2)} Cr`;
+        valCarbon.textContent = `${currentCarbonVal}T`;
+      }, 3000);
+
+      // 3. SIMULATE CRISIS MODE & DETOUR
+      const btnSimulate = document.getElementById('btn-simulate-crisis');
+      const btnReset = document.getElementById('btn-reset-network');
+      
+      const toast = document.getElementById('crisis-toast');
+      const overlay = document.getElementById('crisis-overlay');
+      const closeToastBtn = document.getElementById('close-toast-btn');
+
+      // Map Route lines
+      const routeNH48 = document.getElementById('route-nh48');
+      const routeNh4 = document.getElementById('route-nh4');
+      const detourLine = document.getElementById('detour-line');
+      const detourTruck = document.getElementById('detour-truck');
+      const mapOutline = document.querySelector('.india-outline');
+
+      btnSimulate.addEventListener('click', () => {
+        // Show Toast overlay dialog
+        toast.classList.add('active');
+        overlay.classList.add('active');
+
+        // Prepend red alert to feed
+        const alertItem = document.createElement('li');
+        alertItem.className = 'feed-item';
+        alertItem.style.borderLeft = '3px solid #ff4444';
+        alertItem.innerHTML = '⚡ <b>CRISIS DETECTED:</b> Mumbai floods. Rerouting 340 trucks via NH-60 detour.';
+        feedContainer.insertBefore(alertItem, feedContainer.firstChild);
+
+        // Change Map route lines visually
+        routeNH48.style.stroke = '#ff4444';
+        routeNh4.style.stroke = '#ff4444';
+        
+        // Show detour rerouting pathway
+        detourLine.style.stroke = '#00C851';
+        detourLine.classList.add('route-active', 'route-reroute');
+        detourTruck.style.display = 'block';
+
+        // Animate Map background pulse
+        mapOutline.style.stroke = 'rgba(255, 68, 68, 0.4)';
+        mapOutline.style.fill = '#11080C';
+      });
+
+      // Close toast trigger
+      const closeToast = () => {
+        toast.classList.remove('active');
+        overlay.classList.remove('active');
+      };
+      
+      closeToastBtn.addEventListener('click', closeToast);
+      overlay.addEventListener('click', closeToast);
+
+      // 4. RESET NETWORK ACTION
+      btnReset.addEventListener('click', () => {
+        // Restore map routes back to default
+        routeNH48.style.stroke = '';
+        routeNh4.style.stroke = '';
+        
+        detourLine.className = 'route-line';
+        detourLine.style.stroke = '';
+        detourTruck.style.display = 'none';
+
+        mapOutline.style.stroke = '';
+        mapOutline.style.fill = '';
+
+        // Prepend reset alert to feed
+        const resetItem = document.createElement('li');
+        resetItem.className = 'feed-item';
+        resetItem.style.borderLeft = '3px solid #00C851';
+        resetItem.innerHTML = '🔄 <b>SYSTEM RESET:</b> Mumbai corridor returned to stable operational parameters.';
+        feedContainer.insertBefore(resetItem, feedContainer.firstChild);
+
+        // Reset statistics counters
+        currentActiveCount = 12847;
+        currentEmptyCount = 42000;
+        currentSavingsVal = 8.4;
+        currentCarbonVal = 2840;
+
+        valActive.textContent = currentActiveCount.toLocaleString('en-IN');
+        valEmpty.textContent = currentEmptyCount.toLocaleString('en-IN');
+        valSavings.textContent = `₹${currentSavingsVal.toFixed(2)} Cr`;
+        valCarbon.textContent = `${currentCarbonVal}T`;
+
+        alert('Logistics Corridor Network restored successfully.');
+      });
+    });
+  </script>
+
+
+<a class="nav-link" onclick="showPage('admin-dashboard-page', this)">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+    </svg>
+    <span>National Control Center</span>
+</a>
+</body>
+</html>
